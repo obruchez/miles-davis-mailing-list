@@ -6,7 +6,7 @@ import java.time.{LocalDateTime, ZoneId, ZoneOffset, ZonedDateTime}
 import java.util.Locale
 import scala.util.Try
 
-case class MailingListEmail(headers: String, message: String) {
+case class MailingListEmail(headers: String, message: String, idOpt: Option[Int] = None) {
   lazy val date: ZonedDateTime = try {
     val dateString = headers.split('\n').find(_.startsWith("Date:")).map(_.drop("Date: ".length).trim).head
     MailingListEmail.parsedEmailDate(dateString)
@@ -14,6 +14,8 @@ case class MailingListEmail(headers: String, message: String) {
     case e: Exception =>
       throw new Exception(s"Unable to parse date in headers: $headers", e)
   }
+
+  val filename: String = s"${idOpt.map(id => f"$id%06d").getOrElse("x" * 6)}-${date.toInstant}.eml".replaceAll(":", "-")
 }
 
 object MailingListEmail {

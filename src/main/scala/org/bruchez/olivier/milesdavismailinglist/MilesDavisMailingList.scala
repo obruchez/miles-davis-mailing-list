@@ -2,18 +2,20 @@ package org.bruchez.olivier.milesdavismailinglist
 
 import scala.util.{Failure, Try}
 
-// TODO: order Gmail emails by date
-// TODO: associate a unique, incremental ID to each mailing list email
-// TODO: detect "holes" in the archive
-// TODO: export to individual EML files (one folder per year?)
-
 object MilesDavisMailingList {
+  val StartYear = 1995
+  val EndYear = 2010
+
   def main(args: Array[String]): Unit = {
-    val gmailEmails = Mbox.parse(args.head)
+    val gmailEmails = Mbox.parse(args.head).filter(_.mailingListEmails.nonEmpty).sortBy(_.averageEpochSecond)
     println(s"Gmail emails: ${gmailEmails.size}")
 
-    val mailingListEmails = gmailEmails.flatMap(MailingListEmail.fromGmailEmail)
+    val mailingListEmails = gmailEmails.flatMap(_.mailingListEmails).zipWithIndex.map { case (email, index) =>
+      email.copy(idOpt = Some(index + 1))
+    }
     println(s"Mailing list emails: ${mailingListEmails.size}")
+
+    mailingListEmails.foreach(m => println(m.filename))
 
     val problematicTimezones =
       mailingListEmails
