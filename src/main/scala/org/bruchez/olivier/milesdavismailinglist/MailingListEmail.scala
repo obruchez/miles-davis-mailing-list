@@ -7,6 +7,7 @@ import java.time.temporal.ChronoField
 import java.time.{LocalDateTime, ZoneId, ZoneOffset, ZonedDateTime}
 import java.util.Locale
 import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.util.{Failure, Try}
 
 case class MailingListEmail(
@@ -15,13 +16,17 @@ case class MailingListEmail(
   idOpt: Option[Int] = None,
   fixedDateOpt: Option[ZonedDateTime] = None) {
 
+  private def header(name: String): String =
+    headers.split('\n').find(_.startsWith(s"$name:")).map(_.drop(s"$name: ".length).trim).head
+
   lazy val date: ZonedDateTime = try {
-    val dateString = headers.split('\n').find(_.startsWith("Date:")).map(_.drop("Date: ".length).trim).head
-    MailingListEmail.parsedEmailDate(dateString)
+    MailingListEmail.parsedEmailDate(header("Date"))
   } catch {
     case e: Exception =>
       throw new Exception(s"Unable to parse date in headers: $headers", e)
   }
+
+  lazy val from: String = header("From")
 
   val filename: String =
     s"${idOpt.map(id => f"$id%06d").getOrElse("x" * 6)}-${fixedDateOpt.getOrElse(date).toInstant}.eml".replaceAll(":", "-")
@@ -69,13 +74,36 @@ object MailingListEmail {
   def withFixedDates(emails: Seq[MailingListEmail]): Seq[MailingListEmail] = {
     val indexedEmails = emails.toIndexedSeq
 
-    def wrongDate(email: MailingListEmail): Boolean =
-      email.date.getYear < MilesDavisMailingList.StartYear || email.date.getYear > MilesDavisMailingList.EndYear
+    // Compute correct/wrong dates, from first email to last email
+    val dateCorrect = mutable.Map.empty[Int, Boolean]
+    for (index <- indexedEmails.indices) {
+      val email = indexedEmails(index)
+
+      lazy val significantSkip = {
+        val firstCorrectDateBefore = (0 until index).reverseIterator.find(dateCorrect(_))
+
+        firstCorrectDateBefore.exists { indexBefore =>
+          val epochBefore = indexedEmails(indexBefore).date.toInstant.getEpochSecond.toDouble
+          val epoch = email.date.toInstant.getEpochSecond.toDouble
+
+          (epoch - epochBefore).abs > 60 * 60 * 24 * 10 // 10 days skip
+        }
+      }
+
+      val exception = Set("2009-11-01T04:57:56Z", "2010-09-30T22:03:38Z")
+
+      val wrong =
+        email.date.getYear < MilesDavisMailingList.StartYear ||
+        email.date.getYear > MilesDavisMailingList.EndYear ||
+        (significantSkip && ! exception.contains(email.date.toInstant.toString))
+
+      dateCorrect(index) = ! wrong
+    }
 
     @tailrec
-    def emailWithCorrectDate(email: MailingListEmail, startIndex: Int, step: Int): (MailingListEmail, Int) =
-      if (! wrongDate(email)) {
-        (email, startIndex)
+    def emailWithCorrectDate(startIndex: Int, step: Int): Int =
+      if (dateCorrect(startIndex)) {
+        startIndex
       } else {
         val newStartIndex = startIndex + step
 
@@ -83,20 +111,20 @@ object MailingListEmail {
           throw new Exception(s"Unable to fix date at $startIndex with step $step")
         }
 
-        emailWithCorrectDate(indexedEmails(newStartIndex), newStartIndex, step)
+        emailWithCorrectDate(newStartIndex, step)
       }
 
     indexedEmails.zipWithIndex.map { case (email, index) =>
       val fixedDate =
-        if (! wrongDate(email)) {
+        if (dateCorrect(index)) {
           // Keep date as is
           email.date
         } else {
-          val (emailBefore, indexBefore) = emailWithCorrectDate(email, index, step = -1)
-          val (emailAfter, indexAfter) = emailWithCorrectDate(email, index, step = +1)
+          val indexBefore = emailWithCorrectDate(index, step = -1)
+          val indexAfter = emailWithCorrectDate(index, step = +1)
 
-          val epochBefore = emailBefore.date.toInstant.getEpochSecond.toDouble
-          val epochAfter = emailAfter.date.toInstant.getEpochSecond.toDouble
+          val epochBefore = indexedEmails(indexBefore).date.toInstant.getEpochSecond.toDouble
+          val epochAfter = indexedEmails(indexAfter).date.toInstant.getEpochSecond.toDouble
 
           val (minEpoch, maxEpoch) =
             if (epochBefore < epochAfter) {
@@ -125,13 +153,14 @@ object MailingListEmail {
 
     println(s"Problematic timezones: ${problematicTimezones.size}")
     problematicTimezones.foreach(println)
+    println()
   }
 
   def checkMissingMonths(emails: Seq[MailingListEmail]): Unit = {
-    val emailsByYear = emails.groupBy(_.date.getYear)
+    val emailsByYear = emails.groupBy(_.fixedDateOpt.get.getYear)
     val missingMonthsByYear = emailsByYear.map { case (year, emails) =>
-      val emailsByMonth = emails.groupBy(_.date.getMonthValue)
-      val months = emailsByMonth.toSeq.filter(_._2.map(_.date.getDayOfMonth).distinct.size > 5).map(_._1).toSet
+      val emailsByMonth = emails.groupBy(_.fixedDateOpt.get.getMonthValue)
+      val months = emailsByMonth.toSeq.filter(_._2.map(_.fixedDateOpt.get.getDayOfMonth).distinct.size > 5).map(_._1).toSet
       val missingMonths = (1 to 12).filterNot(months.contains)
       (year, missingMonths)
     }
@@ -140,6 +169,7 @@ object MailingListEmail {
     missingMonthsByYear.toSeq.sortBy(_._1).foreach { case (year, missingMonths) =>
       println(s"$year: ${missingMonths.mkString(", ")}")
     }
+    println()
   }
 
   def fromString(s: String): MailingListEmail = {

@@ -20,14 +20,17 @@ object GmailEmail {
     GmailEmail(headers, message)
   }
 
-  def dumpMissingLogs(emails: Seq[GmailEmail]): Unit =
+  def dumpMissingLogs(emails: Seq[GmailEmail]): Unit = {
+    println("Missing logs:")
     allLogs.sorted.foreach { log =>
       val lineToFind = s"""Subject: File: "MILES $log""""
       val found = emails.exists(_.headers.contains(lineToFind))
       if (! found) {
-        println(s"Missing: $log")
+        println(s" - $log")
       }
     }
+    println()
+  }
 
   private val allLogs = Seq(
     "LOG9501",
