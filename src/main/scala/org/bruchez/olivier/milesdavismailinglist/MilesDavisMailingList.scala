@@ -1,35 +1,44 @@
 package org.bruchez.olivier.milesdavismailinglist
 
-import scala.util.{Failure, Try}
+import java.nio.file.Paths
 
 object MilesDavisMailingList {
   val StartYear = 1995
   val EndYear = 2010
 
   def main(args: Array[String]): Unit = {
-    val gmailEmails = Mbox.parse(args.head).filter(_.mailingListEmails.nonEmpty).sortBy(_.averageEpochSecond)
+    val mboxFile = args.head
+    val outputDirectory = args(1)
+
+    println(s"MBOX file: $mboxFile")
+    println(s"Output directory: $outputDirectory")
+
+    val gmailEmails = Mbox.parse(mboxFile).filter(_.mailingListEmails.nonEmpty).sortBy(_.averageEpochSecond)
     println(s"Gmail emails: ${gmailEmails.size}")
 
-    val mailingListEmails = gmailEmails.flatMap(_.mailingListEmails).zipWithIndex.map { case (email, index) =>
-      email.copy(idOpt = Some(index + 1))
+    GmailEmail.dumpMissingLogs(gmailEmails)
+
+    val mailingListEmails = gmailEmails.flatMap(_.mailingListEmails)
+    MailingListEmail.checkProblematicTimezones(mailingListEmails)
+    val mailingListEmailsWithIds = MailingListEmail.withIds(mailingListEmails)
+    val mailingListEmailsWithFixedDates = MailingListEmail.withFixedDates(mailingListEmailsWithIds)
+    println(s"Mailing list emails: ${mailingListEmailsWithFixedDates.size}")
+
+    mailingListEmailsWithFixedDates.foreach { email =>
+      if (email.date.toInstant.getEpochSecond == email.fixedDateOpt.get.toInstant.getEpochSecond) {
+        println(s"${email.filename}: ${email.date}")
+      } else {
+        println(s"${email.filename}: ${email.date} -> ${email.fixedDateOpt.get}")
+      }
     }
-    println(s"Mailing list emails: ${mailingListEmails.size}")
 
-    mailingListEmails.foreach(m => println(m.filename))
+    MailingListEmail.checkMissingMonths(mailingListEmailsWithFixedDates)
 
-    val problematicTimezones =
-      mailingListEmails
-        .map(email => Try(email.date))
-        .collect { case Failure(t) => t.getMessage.split("\n").head.split(' ').last }
-        .distinct
-        .sorted
-
-    println(s"Problematic timezones: ${problematicTimezones.size}")
-    problematicTimezones.foreach(println)
-
-    val mailingListEmailsByYear = mailingListEmails.groupBy(_.date.getYear)
+    val mailingListEmailsByYear = mailingListEmailsWithFixedDates.groupBy(_.fixedDateOpt.get.getYear)
     mailingListEmailsByYear.toSeq.sortBy(_._1).foreach { case (year, emails) =>
       println(s"$year: ${emails.size}")
     }
+
+    MailingListEmail.saveAllAsEmlAndMbox(Paths.get(outputDirectory), mailingListEmailsWithFixedDates)
   }
 }
