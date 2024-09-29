@@ -8,7 +8,7 @@ Back in 2010, when it was announced that the Miles Davis mailing list was going 
 
 Most of the code in this repository tries to detect wrong dates, fix them (while keeping the original headers and message bodies intact), and exports the mailing list messages either as individual EML files or as MBOX files (one per year).
 
-Since the mailing list was private, I can't make those messages available to the public. If you are interested in the mailing list archive, contact me ([olivier@bruchez.org](mailto:olivier@bruchez.org)), and I'll send you a copy of the data.
+Since the mailing list was private, I can't make those messages publicly available. If you are interested in the mailing list archive, contact me ([olivier@bruchez.org](mailto:olivier@bruchez.org)), and I'll send you a copy of the data.
 
 ## Missing messages
 
