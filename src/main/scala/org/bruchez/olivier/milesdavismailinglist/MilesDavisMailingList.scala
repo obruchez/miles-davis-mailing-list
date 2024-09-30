@@ -7,14 +7,19 @@ object MilesDavisMailingList {
   val EndYear = 2010
 
   def main(args: Array[String]): Unit = {
-    val mboxFile = args.head
-    val outputDirectory = args(1)
+    if (args.length < 2) {
+      println("Usage: MilesDavisMailingList <mbox files>... <output directory>")
+      sys.exit(1)
+    }
 
-    println(s"MBOX file: $mboxFile")
+    val mboxFiles = args.init.toSeq
+    val outputDirectory = args.last
+
+    println(s"MBOX file(s): ${mboxFiles.mkString(", ")}")
     println(s"Output directory: $outputDirectory")
     println()
 
-    val gmailEmails = Mbox.parse(mboxFile).filter(_.mailingListEmails.nonEmpty).sortBy(_.averageEpochSecond).distinctBy(_.averageEpochSecond)
+    val gmailEmails = mboxFiles.flatMap(Mbox.parse).filter(_.mailingListEmails.nonEmpty).sortBy(_.averageEpochSecond).distinctBy(_.averageEpochSecond)
     println(s"Gmail emails: ${gmailEmails.size}")
     println()
 

@@ -3,6 +3,7 @@
 .bsp/
 .idea/
 hs_err_pid*
-Miles.mbox
+miles1.mbox
+miles2.mbox
 project/
 target/

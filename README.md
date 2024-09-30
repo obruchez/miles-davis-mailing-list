@@ -27,9 +27,30 @@ I'm also missing all messages before 1995.
 
 If you happen to have any of those missing messages (even individual ones), please forward them to me ([olivier@bruchez.org](mailto:olivier@bruchez.org)). I'll then integrate them into the archive.
 
-## Current content of the archive
+## Current content of the archive (V2)
 
-As of 2024-09-29, the Miles Davis mailing list archive contains 209,050 messages.
+As of 2024-09-30, the Miles Davis mailing list archive contains 209,110 messages.
+
+- 1995: 5490
+- 1996: 7696
+- 1997: 10699
+- 1998: 9632
+- 1999: 11836
+- 2000: 10822
+- 2001: 17137
+- 2002: 10735
+- 2003: 13292
+- 2004: 12556
+- 2005: 17254
+- 2006: 19068
+- 2007: 13866
+- 2008: 18062
+- 2009: 17314
+- 2010: 13651
+
+### Previous content of the archive (V1)
+
+As of 2024-09-29, the Miles Davis mailing list archive (V1) contained 209,050 messages.
 
 - 1995: 5490
 - 1996: 7696
