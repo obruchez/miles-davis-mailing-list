@@ -8,8 +8,6 @@ Back in 2010, when it was announced that the Miles Davis mailing list was going 
 
 Most of the code in this repository tries to detect wrong dates, fix them (while keeping the original headers and message bodies intact), and exports the mailing list messages either as individual EML files or as MBOX files (one per year).
 
-Since the mailing list was private, I can't make those messages publicly available. If you are interested in the mailing list archive, contact me ([olivier@bruchez.org](mailto:olivier@bruchez.org)), and I'll send you a copy of the data.
-
 ## Missing messages
 
 For some reason, I'm missing the following batches of emails:
@@ -27,7 +25,7 @@ I'm also missing all messages before 1995.
 
 If you happen to have any of those missing messages (even individual ones), please forward them to me ([olivier@bruchez.org](mailto:olivier@bruchez.org)). I'll then integrate them into the archive.
 
-## Current content of the archive (V2)
+## Current content of the archive (v2)
 
 As of 2024-09-30, the Miles Davis mailing list archive contains 209,110 messages.
 
@@ -48,7 +46,9 @@ As of 2024-09-30, the Miles Davis mailing list archive contains 209,110 messages
 - 2009: 17314
 - 2010: 13651
 
-### Previous content of the archive (V1)
+EML and MBOX files can be downloaded from the [v2 release page](https://github.com/obruchez/miles-davis-mailing-list/releases/tag/v2).
+
+### Previous content of the archive (v1)
 
 As of 2024-09-29, the Miles Davis mailing list archive (V1) contained 209,050 messages.
 
