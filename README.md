@@ -50,7 +50,7 @@ EML and MBOX files can be downloaded from the [v2 release page](https://github.c
 
 ### Previous content of the archive (v1)
 
-As of 2024-09-29, the Miles Davis mailing list archive (V1) contained 209,050 messages.
+As of 2024-09-29, the Miles Davis mailing list archive (v1) contained 209,050 messages.
 
 - 1995: 5490
 - 1996: 7696
